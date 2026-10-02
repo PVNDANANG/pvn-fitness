@@ -247,6 +247,24 @@
             </div>
         </section>
 
+        <!-- Chu kỳ tăng tạ & giảm tải -->
+        <section id="cycle-card" class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2"><span>🔁</span> Chu Kỳ Tăng Tạ &amp; Giảm Tải</h3>
+                <div class="flex items-center gap-2 text-xs font-semibold">
+                    <button type="button" onclick="cycleStep(-1)" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-base" aria-label="Lùi 1 tuần">−</button>
+                    <span class="px-3 py-1.5 bg-slate-900 text-white rounded-lg">Tuần <span id="cy-week">1</span> · Chu kỳ <span id="cy-cycle">1</span></span>
+                    <button type="button" onclick="cycleStep(1)" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-base" aria-label="Tiến 1 tuần">+</button>
+                </div>
+            </div>
+            <div id="cy-dots" class="grid grid-cols-4 gap-2 text-[11px] font-semibold text-center"></div>
+            <div id="cy-detail" class="rounded-xl border p-4 text-sm space-y-1.5"></div>
+            <details class="text-xs text-slate-600">
+                <summary class="cursor-pointer font-semibold text-slate-700">Quy tắc tăng tạ (Double Progression)</summary>
+                <ul id="cy-rules" class="list-disc pl-5 mt-2 space-y-1"></ul>
+            </details>
+        </section>
+
         <!-- Interactive Weekly Planner & Editor -->
         <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             <!-- Section Header & Day Actions -->
@@ -262,6 +280,9 @@
                 <div class="flex flex-wrap items-center gap-2">
                     <button onclick="resetCurrentOption()" class="px-3 py-1.5 text-xs font-semibold text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-100 transition-all flex items-center gap-1 shadow-sm">
                         <span>🔄</span> Khôi Phục Mặc Định
+                    </button>
+                    <button onclick="groupDayByMuscle()" class="px-3 py-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 rounded-lg transition-all flex items-center gap-1">
+                        <span>🧩</span> Gom Nhóm Cơ
                     </button>
                     <button onclick="clearDayExercises()" class="px-3 py-1.5 text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 hover:bg-rose-100 rounded-lg transition-all flex items-center gap-1 shadow-sm" title="Xóa tất cả bài tập trong ngày này">
                         <span>🗑️</span> Xóa Sạch Ngày Này
@@ -309,6 +330,7 @@
                                         <th class="py-3 px-4">Tên Bài Tập</th>
                                         <th class="py-3 px-3 text-center">Sets</th>
                                         <th class="py-3 px-3 text-center">Reps / Thời Gian</th>
+                                        <th class="py-3 px-3 text-center">Dụng Cụ</th>
                                         <th class="py-3 px-3 text-center">Mức Tạ (kg)</th>
                                         <th class="py-3 px-3 text-center">Form (DeltaBolic)</th>
                                         <th class="py-3 px-3 text-center">Thao Tác</th>
@@ -638,6 +660,9 @@
                 <button onclick="exportPlanSummary()" class="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold text-xs rounded-xl transition-all shadow-lg shadow-emerald-500/20 flex items-center gap-1.5">
                     <span>📋</span> Sao Chép Giáo Trình Gửi Học Viên
                 </button>
+                <button onclick="exportStudentPage()" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs rounded-xl transition-all flex items-center gap-1.5">
+                    <span>🌐</span> Xuất Trang Học Viên
+                </button>
                 <button onclick="sharePlan()" class="px-5 py-2.5 bg-sky-500 hover:bg-sky-600 text-slate-950 font-extrabold text-xs rounded-xl transition-all flex items-center gap-1.5">
                     <span>📤</span> Gửi Qua Zalo / Chia Sẻ
                 </button>
@@ -649,6 +674,33 @@
 
     </main>
 
+
+    <!-- Đồng hồ nghỉ giữa set -->
+    <div id="rest-timer" class="fixed right-3 z-40 flex flex-col items-end gap-2" style="bottom: calc(12px + env(safe-area-inset-bottom, 0px));">
+        <div id="rt-panel" class="hidden w-64 bg-white rounded-2xl shadow-2xl border border-slate-200 p-4 space-y-3">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-700">⏱ Nghỉ giữa set</span>
+                <button type="button" onclick="rtTogglePanel()" class="text-slate-400 hover:text-slate-600 font-bold text-lg leading-none" aria-label="Đóng đồng hồ">&times;</button>
+            </div>
+            <div id="rt-display" class="text-4xl font-extrabold text-center tabular-nums text-slate-900">01:30</div>
+            <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden"><div id="rt-bar" class="h-full bg-emerald-500 transition-all" style="width:100%"></div></div>
+            <div class="grid grid-cols-4 gap-1.5 text-xs font-semibold">
+                <button type="button" onclick="rtPreset(60)" class="py-1.5 rounded-lg bg-slate-100 hover:bg-emerald-100 text-slate-700">60s</button>
+                <button type="button" onclick="rtPreset(90)" class="py-1.5 rounded-lg bg-slate-100 hover:bg-emerald-100 text-slate-700">90s</button>
+                <button type="button" onclick="rtPreset(120)" class="py-1.5 rounded-lg bg-slate-100 hover:bg-emerald-100 text-slate-700">2 phút</button>
+                <button type="button" onclick="rtPreset(180)" class="py-1.5 rounded-lg bg-slate-100 hover:bg-emerald-100 text-slate-700">3 phút</button>
+            </div>
+            <div class="flex gap-1.5 text-xs font-bold">
+                <button type="button" id="rt-main-btn" onclick="rtStartPause()" class="flex-1 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white">▶ Bắt đầu</button>
+                <button type="button" onclick="rtAdd(15)" class="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700">+15s</button>
+                <button type="button" onclick="rtReset()" class="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700">↺</button>
+            </div>
+            <label class="flex items-center gap-2 text-[11px] text-slate-500"><input type="checkbox" id="rt-sound" checked onchange="rtSaveSettings()"> Bật âm báo &amp; rung khi hết giờ</label>
+        </div>
+        <button type="button" id="rt-fab" onclick="rtTogglePanel()" class="px-4 py-3 rounded-full bg-slate-900 text-white shadow-lg text-xs font-bold flex items-center gap-1.5 hover:bg-slate-800">
+            <span>⏱</span><span id="rt-fab-text">Nghỉ</span>
+        </button>
+    </div>
 
     <!-- Modal: Học viên mới -->
     <div id="new-student-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
@@ -721,8 +773,13 @@
                     </div>
                     <div>
                         <label class="block font-semibold text-slate-700 mb-1">Mức Tạ Mục Tiêu (kg):</label>
-                        <input type="text" id="modal-ex-weight" value="Tùy chỉnh" placeholder="Ví dụ: 50kg hoặc N/A" class="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500">
+                        <input type="text" id="modal-ex-weight" value="" placeholder="Ví dụ: 50kg (có thể để trống)" class="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500">
                     </div>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Dụng cụ:</label>
+                    <input type="text" id="modal-ex-equip" value="Dumbbell" placeholder="Barbell, Dumbbell, Cable, Machine, Bodyweight..." class="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500">
                 </div>
 
                 <div>
@@ -826,88 +883,96 @@
             id: 'option1',
             badge: 'Hypertrophy Focus',
             title: 'Phương Án 1: Lịch Tập 6 Buổi Gym Chuyên Sâu (Push - Pull - Legs x 2)',
-            desc: 'Mục tiêu tối ưu hóa việc phát triển cơ bắp (Hypertrophy), phân bổ đều các nhóm cơ 2 lần/tuần giúp phục hồi và kích thích phát triển đồng đều.',
+            desc: 'Mục tiêu tối ưu hóa việc phát triển cơ bắp (Hypertrophy), mỗi nhóm cơ tập 2 lần/tuần. Thứ tự buổi: Đẩy - Chân (đùi trước) - Kéo - Đẩy - Chân (mông & đùi sau) - Kéo, xen kẽ để không buổi nào tập trùng nhóm cơ với buổi liền trước, Deadlift và RDL cách nhau 48 giờ. Có thêm bài cho cầu vai, cẳng tay, bắp chân và bụng.',
             days: [
                 {
                     id: 'd1', dayName: 'Thứ 2', title: 'Push A (Ngực - Vai - Tay sau)', focus: 'Sức mạnh / Nặng',
-                    notes: 'Coach Phan Văn Nhựt lưu ý: Tập trung bài biến thể Compound nặng đầu buổi. Hãy mở video DeltaBolic (Andrew Kwong) xem đúng kỹ thuật hãm tạ trước khi gánh nặng.',
+                    notes: 'Coach Phan Văn Nhựt lưu ý: Khởi động 5-8 phút và làm 1-2 set nhẹ bài đầu tiên. Bài Compound nặng làm đầu buổi, nghỉ 2-3 phút giữa các set nặng. Xem video DeltaBolic (Andrew Kwong) để hãm tạ đúng kỹ thuật.',
                     memo: '',
                     exercises: [
-                        { name: 'Barbell Bench Press (Đẩy ngực ngang)', group: 'Ngực', sets: 4, reps: '6 - 8 reps', weight: 'Barbell', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Barbell+Bench+Press' },
-                        { name: 'Overhead Press (Đẩy vai đứng)', group: 'Vai', sets: 3, reps: '8 - 10 reps', weight: 'Barbell', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Overhead+Press' },
-                        { name: 'Incline Dumbbell Press (Đẩy ngực trên)', group: 'Ngực', sets: 3, reps: '10 - 12 reps', weight: 'Dumbbell', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Incline+Dumbbell+Press' },
-                        { name: 'Cable Lateral Raise (Banh vai cáp)', group: 'Vai', sets: 4, reps: '12 - 15 reps', weight: 'Cable', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Cable+Lateral+Raise' },
-                        { name: 'Triceps Rope Pushdown (Tay sau cáp)', group: 'Tay', sets: 3, reps: '12 - 15 reps', weight: 'Cable', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Triceps+Rope+Pushdown' }
+                        { name: 'Barbell Bench Press (Đẩy ngực ngang)', group: 'Ngực', sets: 4, reps: '6 - 8 reps', equip: 'Barbell', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Barbell+Bench+Press' },
+                        { name: 'Incline Dumbbell Press (Đẩy ngực trên)', group: 'Ngực', sets: 3, reps: '10 - 12 reps', equip: 'Dumbbell', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Incline+Dumbbell+Press' },
+                        { name: 'Cable Chest Fly (Ép ngực cáp)', group: 'Ngực', sets: 3, reps: '12 - 15 reps', equip: 'Cable', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Cable+Chest+Fly' },
+                        { name: 'Overhead Press (Đẩy vai đứng)', group: 'Vai', sets: 3, reps: '8 - 10 reps', equip: 'Barbell', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Overhead+Press' },
+                        { name: 'Cable Lateral Raise (Banh vai cáp)', group: 'Vai', sets: 4, reps: '12 - 15 reps', equip: 'Cable', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Cable+Lateral+Raise' },
+                        { name: 'Triceps Rope Pushdown (Tay sau cáp)', group: 'Tay', sets: 3, reps: '12 - 15 reps', equip: 'Cable', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Triceps+Rope+Pushdown' },
+                        { name: 'Overhead Cable Triceps Extension (Tay sau đầu dài)', group: 'Tay', sets: 3, reps: '12 - 15 reps', equip: 'Cable', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Overhead+Cable+Triceps+Extension' }
                     ]
                 },
                 {
-                    id: 'd2', dayName: 'Thứ 3', title: 'Pull A (Lưng - Xô - Tay trước)', focus: 'Độ dày lưng & Sức kéo',
-                    notes: 'Coach Phan Văn Nhựt lưu ý: Chú ý siết cơ lưng ở đỉnh động tác. Xem video DeltaBolic về bài Deadlift/RDL kỹ để bảo vệ đốt sống thắt lưng.',
+                    id: 'd2', dayName: 'Thứ 3', title: 'Legs A (Đùi trước - Bắp chân - Bụng)', focus: 'Thiên về Đùi Trước (Quad)',
+                    notes: 'Coach Phan Văn Nhựt lưu ý: Khởi động 5-8 phút và làm 1-2 set nhẹ bài đầu tiên. Squat sâu đúng form, gối không sụp vào trong khi đứng lên. Tập chân sau buổi Push để đủ 48 giờ phục hồi trước khi kéo Deadlift.',
                     memo: '',
                     exercises: [
-                        { name: 'Barbell Deadlift / RDL', group: 'Lưng / Xô', sets: 3, reps: '6 - 8 reps', weight: 'Barbell', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Barbell+Deadlift' },
-                        { name: 'Barbell Bent-Over Row (Chèo thuyền)', group: 'Lưng / Xô', sets: 4, reps: '8 - 10 reps', weight: 'Barbell', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Bent+Over+Row' },
-                        { name: 'Lat Pulldown (Kéo xô máy)', group: 'Lưng / Xô', sets: 3, reps: '10 - 12 reps', weight: 'Machine', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Lat+Pulldown' },
-                        { name: 'Face Pull (Kéo cáp vai sau)', group: 'Vai', sets: 4, reps: '15 reps', weight: 'Cable', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Face+Pull' },
-                        { name: 'Barbell Bicep Curl (Cuốn tay trước)', group: 'Tay', sets: 3, reps: '10 - 12 reps', weight: 'Barbell', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Bicep+Curl' }
+                        { name: 'Barbell Back Squat (Gánh đùi)', group: 'Đùi / Mông', sets: 4, reps: '6 - 8 reps', equip: 'Barbell', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Barbell+Back+Squat' },
+                        { name: 'Bulgarian Split Squat', group: 'Đùi / Mông', sets: 3, reps: '10 - 12 reps/chân', equip: 'Dumbbell', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Bulgarian+Split+Squat' },
+                        { name: 'Leg Extension (Đá đùi máy)', group: 'Đùi / Mông', sets: 3, reps: '12 - 15 reps', equip: 'Machine', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Leg+Extension' },
+                        { name: 'Lying Leg Curl (Móc đùi sau)', group: 'Đùi / Mông', sets: 3, reps: '12 - 15 reps', equip: 'Machine', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Lying+Leg+Curl' },
+                        { name: 'Seated Calf Raise (Nhón bắp chân ngồi)', group: 'Đùi / Mông', sets: 4, reps: '15 - 20 reps', equip: 'Machine', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Seated+Calf+Raise' },
+                        { name: 'Hanging Leg Raise (Gập bụng đu xà)', group: 'Bụng', sets: 3, reps: '15 reps', equip: 'Bodyweight', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Hanging+Leg+Raise' }
                     ]
                 },
                 {
-                    id: 'd3', dayName: 'Thứ 4', title: 'Legs A (Đùi - Mông - Bụng)', focus: 'Thiên về Đùi Trước',
-                    notes: 'Coach Phan Văn Nhựt lưu ý: Squat sâu chuẩn form. Xem video Andrew Kwong để đảm bảo gối không bị sụp vào trong khi đi lên.',
+                    id: 'd3', dayName: 'Thứ 4', title: 'Pull A (Lưng dày - Cầu vai - Tay trước)', focus: 'Độ dày lưng & Sức kéo',
+                    notes: 'Coach Phan Văn Nhựt lưu ý: Khởi động 5-8 phút và làm 1-2 set nhẹ bài đầu tiên. Siết bả vai ở đỉnh động tác. Deadlift/RDL giữ lưng thẳng, nếu mỏi lưng dưới hãy giảm tạ. Đây là buổi kéo nặng nên ăn đủ carb trước tập.',
                     memo: '',
                     exercises: [
-                        { name: 'Barbell Back Squat (Gánh đùi)', group: 'Đùi / Mông', sets: 4, reps: '6 - 8 reps', weight: 'Barbell', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Barbell+Squat' },
-                        { name: 'Bulgarian Split Squat', group: 'Đùi / Mông', sets: 3, reps: '10 - 12 reps/chân', weight: 'Dumbbell', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Bulgarian+Split+Squat' },
-                        { name: 'Leg Extension (Đá đùi máy)', group: 'Đùi / Mông', sets: 3, reps: '12 - 15 reps', weight: 'Machine', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Leg+Extension' },
-                        { name: 'Lying Leg Curl (Móc đùi sau)', group: 'Đùi / Mông', sets: 3, reps: '12 - 15 reps', weight: 'Machine', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Lying+Leg+Curl' },
-                        { name: 'Calf Raise (Nhón bắp chân)', group: 'Đùi / Mông', sets: 4, reps: '15 - 20 reps', weight: 'Bodyweight', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Calf+Raise' },
-                        { name: 'Hanging Leg Raise (Gập bụng đu xà)', group: 'Bụng', sets: 3, reps: '15 reps', weight: 'Bodyweight', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Hanging+Leg+Raise' }
+                        { name: 'Barbell Deadlift / RDL', group: 'Lưng / Xô', sets: 3, reps: '6 - 8 reps', equip: 'Barbell', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Barbell+Deadlift+RDL' },
+                        { name: 'Barbell Bent-Over Row (Chèo thuyền)', group: 'Lưng / Xô', sets: 4, reps: '8 - 10 reps', equip: 'Barbell', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Barbell+Bent-Over+Row' },
+                        { name: 'Lat Pulldown (Kéo xô máy)', group: 'Lưng / Xô', sets: 3, reps: '10 - 12 reps', equip: 'Machine', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Lat+Pulldown' },
+                        { name: 'Barbell Shrug (Nhún cầu vai)', group: 'Lưng / Xô', sets: 3, reps: '10 - 12 reps', equip: 'Barbell', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Barbell+Shrug' },
+                        { name: 'Face Pull (Kéo cáp vai sau)', group: 'Vai', sets: 4, reps: '15 reps', equip: 'Cable', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Face+Pull' },
+                        { name: 'Barbell Bicep Curl (Cuốn tay trước)', group: 'Tay', sets: 3, reps: '10 - 12 reps', equip: 'Barbell', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Barbell+Bicep+Curl' },
+                        { name: 'Plank (Giữ plank)', group: 'Bụng', sets: 3, reps: '45 - 60 giây', equip: 'Bodyweight', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Plank' }
                     ]
                 },
                 {
                     id: 'd4', dayName: 'Thứ 5', title: 'Push B (Ngực - Vai - Tay sau)', focus: 'Cô lập / Phồng cơ',
-                    notes: 'Coach Phan Văn Nhựt lưu ý: Cường độ vừa phải, nghỉ từ 60-90s giữa các set để tối ưu hiệu ứng Pump cơ.',
+                    notes: 'Coach Phan Văn Nhựt lưu ý: Khởi động 5-8 phút và làm 1-2 set nhẹ bài đầu tiên. Cường độ vừa phải, nghỉ 60-90 giây giữa các set để tối ưu hiệu ứng Pump. Tập trung cảm nhận cơ co giãn, không chạy theo mức tạ.',
                     memo: '',
                     exercises: [
-                        { name: 'Incline Barbell Press (Đẩy ngực trên)', group: 'Ngực', sets: 4, reps: '8 - 10 reps', weight: 'Barbell', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Incline+Barbell+Press' },
-                        { name: 'Dumbbell Shoulder Press (Đẩy vai ngồi)', group: 'Vai', sets: 3, reps: '10 - 12 reps', weight: 'Dumbbell', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Dumbbell+Shoulder+Press' },
-                        { name: 'Chest Dip / Cable Fly (Xà kép / Cáp)', group: 'Ngực', sets: 3, reps: '12 - 15 reps', weight: 'Cable', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Chest+Fly' },
-                        { name: 'Dumbbell Lateral Raise (Banh vai tạ đơn)', group: 'Vai', sets: 4, reps: '12 - 15 reps', weight: 'Dumbbell', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Dumbbell+Lateral+Raise' },
-                        { name: 'Skullcrusher / Overhead Extension', group: 'Tay', sets: 3, reps: '10 - 12 reps', weight: 'EZ-Bar', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Skullcrusher' }
+                        { name: 'Incline Barbell Press (Đẩy ngực trên)', group: 'Ngực', sets: 4, reps: '8 - 10 reps', equip: 'Barbell', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Incline+Barbell+Press' },
+                        { name: 'Chest Dip / Cable Fly (Xà kép / Cáp)', group: 'Ngực', sets: 3, reps: '12 - 15 reps', equip: 'Cable', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Chest+Dip+Cable+Fly' },
+                        { name: 'Dumbbell Shoulder Press (Đẩy vai ngồi)', group: 'Vai', sets: 3, reps: '10 - 12 reps', equip: 'Dumbbell', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Dumbbell+Shoulder+Press' },
+                        { name: 'Dumbbell Lateral Raise (Banh vai tạ đơn)', group: 'Vai', sets: 4, reps: '12 - 15 reps', equip: 'Dumbbell', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Dumbbell+Lateral+Raise' },
+                        { name: 'Skullcrusher / Overhead Extension', group: 'Tay', sets: 3, reps: '10 - 12 reps', equip: 'EZ-Bar', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Skullcrusher+Overhead+Extension' },
+                        { name: 'Ab Wheel Rollout (Lăn bánh xe bụng)', group: 'Bụng', sets: 3, reps: '10 - 12 reps', equip: 'Bodyweight', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Ab+Wheel+Rollout' }
                     ]
                 },
                 {
-                    id: 'd5', dayName: 'Thứ 6', title: 'Pull B (Lưng - Xô - Tay trước)', focus: 'Độ rộng lưng (Lat Width)',
-                    notes: 'Coach Phan Văn Nhựt lưu ý: Hít xà đơn điều khiển chuyển động cẩn thận. Tránh dùng đà quá nhiều.',
+                    id: 'd5', dayName: 'Thứ 6', title: 'Legs B (Mông - Đùi sau - Bụng)', focus: 'Thiên về Mông & Đùi Sau',
+                    notes: 'Coach Phan Văn Nhựt lưu ý: Khởi động 5-8 phút và làm 1-2 set nhẹ bài đầu tiên. Hip Thrust gồng chặt mông ở đỉnh 1-2 giây. Buổi này cách buổi Deadlift 48 giờ nên lưng dưới đã kịp phục hồi.',
                     memo: '',
                     exercises: [
-                        { name: 'Pull-up / Chin-up (Hít xà đơn)', group: 'Lưng / Xô', sets: 4, reps: 'Max reps', weight: 'Bodyweight', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Pull+ups' },
-                        { name: 'Seated Cable Row (Kéo xô ngồi)', group: 'Lưng / Xô', sets: 3, reps: '10 - 12 reps', weight: 'Cable', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Seated+Cable+Row' },
-                        { name: 'Single-arm Dumbbell Row', group: 'Lưng / Xô', sets: 3, reps: '10 - 12 reps', weight: 'Dumbbell', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Single+Arm+Dumbbell+Row' },
-                        { name: 'Rear Delt Fly (Banh vai sau)', group: 'Vai', sets: 4, reps: '12 - 15 reps', weight: 'Dumbbell', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Rear+Delt+Fly' },
-                        { name: 'Dumbbell Hammer Curl (Cuốn búa)', group: 'Tay', sets: 3, reps: '10 - 12 reps', weight: 'Dumbbell', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Hammer+Curl' }
+                        { name: 'Barbell Hip Thrust (Đẩy mông)', group: 'Đùi / Mông', sets: 4, reps: '8 - 10 reps', equip: 'Barbell', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Barbell+Hip+Thrust' },
+                        { name: 'Leg Press (Đẩy chân máy)', group: 'Đùi / Mông', sets: 3, reps: '10 - 12 reps', equip: 'Machine', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Leg+Press' },
+                        { name: 'Romanian Deadlift tạ đơn', group: 'Đùi / Mông', sets: 3, reps: '10 - 12 reps', equip: 'Dumbbell', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Romanian+Deadlift+tạ+đơn' },
+                        { name: 'Seated Leg Curl (Móc đùi ngồi)', group: 'Đùi / Mông', sets: 3, reps: '12 - 15 reps', equip: 'Machine', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Seated+Leg+Curl' },
+                        { name: 'Hip Abduction Machine (Đạp mông ngoài)', group: 'Đùi / Mông', sets: 3, reps: '15 - 20 reps', equip: 'Machine', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Hip+Abduction+Machine' },
+                        { name: 'Standing Calf Raise', group: 'Đùi / Mông', sets: 4, reps: '15 - 20 reps', equip: 'Machine', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Standing+Calf+Raise' },
+                        { name: 'Cable Crunch (Gập bụng cáp)', group: 'Bụng', sets: 3, reps: '12 - 15 reps', equip: 'Cable', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Cable+Crunch' }
                     ]
                 },
                 {
-                    id: 'd6', dayName: 'Thứ 7', title: 'Legs B (Mông - Đùi sau - Bụng)', focus: 'Thiên về Mông & Đùi Sau',
-                    notes: 'Coach Phan Văn Nhựt lưu ý: Hip Thrust gồng chặt mông ở đỉnh 1-2 giây theo hướng dẫn DeltaBolic.',
+                    id: 'd6', dayName: 'Thứ 7', title: 'Pull B (Lưng rộng - Tay trước - Cẳng tay)', focus: 'Độ rộng lưng (Lat Width)',
+                    notes: 'Coach Phan Văn Nhựt lưu ý: Khởi động 5-8 phút và làm 1-2 set nhẹ bài đầu tiên. Hít xà đơn có kiểm soát, tránh dùng đà. Nếu chưa hít được, dùng máy hỗ trợ hoặc Lat Pulldown. Cuối buổi tập cẳng tay để tăng lực nắm cho Deadlift.',
                     memo: '',
                     exercises: [
-                        { name: 'Barbell Hip Thrust (Đẩy mông)', group: 'Đùi / Mông', sets: 4, reps: '8 - 10 reps', weight: 'Barbell', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Barbell+Hip+Thrust' },
-                        { name: 'Leg Press (Đẩy chân máy)', group: 'Đùi / Mông', sets: 3, reps: '10 - 12 reps', weight: 'Machine', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Leg+Press' },
-                        { name: 'Romanian Deadlift tạ đơn', group: 'Đùi / Mông', sets: 3, reps: '10 - 12 reps', weight: 'Dumbbell', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Dumbbell+Romanian+Deadlift' },
-                        { name: 'Seated Leg Curl (Móc đùi ngồi)', group: 'Đùi / Mông', sets: 3, reps: '12 - 15 reps', weight: 'Machine', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Seated+Leg+Curl' },
-                        { name: 'Standing Calf Raise', group: 'Đùi / Mông', sets: 4, reps: '15 - 20 reps', weight: 'Machine', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Standing+Calf+Raise' },
-                        { name: 'Cable Crunch / Plank', group: 'Bụng', sets: 3, reps: '60 giây', weight: 'Cable', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Cable+Crunch' }
+                        { name: 'Pull-up / Chin-up (Hít xà đơn)', group: 'Lưng / Xô', sets: 4, reps: 'Max reps', equip: 'Bodyweight', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Pull-up+Chin-up' },
+                        { name: 'Seated Cable Row (Kéo xô ngồi)', group: 'Lưng / Xô', sets: 3, reps: '10 - 12 reps', equip: 'Cable', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Seated+Cable+Row' },
+                        { name: 'Single-arm Dumbbell Row', group: 'Lưng / Xô', sets: 3, reps: '10 - 12 reps', equip: 'Dumbbell', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Single-arm+Dumbbell+Row' },
+                        { name: 'Rear Delt Fly (Banh vai sau)', group: 'Vai', sets: 4, reps: '12 - 15 reps', equip: 'Dumbbell', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Rear+Delt+Fly' },
+                        { name: 'Incline Dumbbell Curl (Cuốn tay trước ghế dốc)', group: 'Tay', sets: 3, reps: '10 - 12 reps', equip: 'Dumbbell', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Incline+Dumbbell+Curl' },
+                        { name: 'Dumbbell Hammer Curl (Cuốn búa)', group: 'Tay', sets: 3, reps: '10 - 12 reps', equip: 'Dumbbell', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Dumbbell+Hammer+Curl' },
+                        { name: 'Wrist Curl / Reverse Curl (Cẳng tay)', group: 'Tay', sets: 3, reps: '15 reps', equip: 'Dumbbell', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Wrist+Curl+Reverse+Curl' }
                     ]
                 },
                 {
                     id: 'd7', dayName: 'Chủ Nhật', title: 'Nghỉ Ngơi Hoàn Toàn (Rest Day)', focus: 'Phục hồi hoàn toàn',
-                    notes: 'Coach Phan Văn Nhựt lưu ý: Dành ngày này để giãn cơ nhẹ nhàng, ngủ đủ 8 tiếng và bổ sung đủ lượng Protein.',
+                    notes: 'Coach Phan Văn Nhựt lưu ý: Dành ngày này để đi bộ nhẹ, giãn cơ hoặc foam roll, ngủ đủ 8 tiếng và bổ sung đủ Protein. Cơ bắp phát triển trong lúc nghỉ chứ không phải lúc tập.',
                     memo: '',
                     exercises: [
-                        { name: 'Giãn cơ nhẹ & Đi bộ thư giãn', group: 'Cardio', sets: 1, reps: '20 - 30 phút', weight: 'N/A', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Stretching' }
+                        { name: 'Giãn cơ nhẹ & Đi bộ thư giãn', group: 'Cardio', sets: 1, reps: '20 - 30 phút', equip: 'N/A', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Giãn+cơ+nhẹ+&+Đi+bộ+thư+giãn' }
                     ]
                 }
             ]
@@ -917,76 +982,81 @@
             id: 'option2',
             badge: 'Fat Loss & Endurance',
             title: 'Phương Án 2: Lịch Tập Kết Hợp (3 Buổi Gym + 3 Buổi Cardio)',
-            desc: 'Mục tiêu đốt cháy mỡ thừa nhanh chóng, cải thiện sức bền tim mạch nhưng vẫn duy trì và săn chắc khối lượng cơ bắp.',
+            desc: 'Mục tiêu đốt mỡ, cải thiện sức bền tim mạch nhưng vẫn giữ cơ. Thứ tự buổi: Thân trên - Cardio Zone 2 - Thân dưới - Cardio nhẹ phục hồi - Toàn thân - HIIT. Buổi tập chân nặng luôn cách ít nhất 48 giờ, HIIT xếp cuối tuần khi đã nghỉ đủ.',
             days: [
                 {
                     id: 'd1', dayName: 'Thứ 2', title: 'Gym 1: Upper Body (Thân Trên)', focus: 'Tăng cường sức mạnh toàn thân trên',
-                    notes: 'Coach Phan Văn Nhựt lưu ý: Chủ yếu các bài tập đa khớp (Compound) để kích hoạt toàn bộ cơ bắp thân trên.',
+                    notes: 'Coach Phan Văn Nhựt lưu ý: Khởi động 5-8 phút và làm 1-2 set nhẹ bài đầu tiên. Ưu tiên bài đa khớp (Compound) để kích hoạt toàn bộ cơ thân trên và duy trì cơ khi thâm hụt calo.',
                     memo: '',
                     exercises: [
-                        { name: 'Dumbbell Bench Press (Đẩy ngực tạ đơn)', group: 'Ngực', sets: 3, reps: '8 - 10 reps', weight: 'Dumbbell', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Dumbbell+Bench+Press' },
-                        { name: 'Lat Pulldown / Pull-up (Kéo xô)', group: 'Lưng / Xô', sets: 3, reps: '8 - 10 reps', weight: 'Machine', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Lat+Pulldown' },
-                        { name: 'Overhead Dumbbell Press (Đẩy vai)', group: 'Vai', sets: 3, reps: '10 - 12 reps', weight: 'Dumbbell', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Dumbbell+Shoulder+Press' },
-                        { name: 'Seated Cable Row (Kéo xô ngồi)', group: 'Lưng / Xô', sets: 3, reps: '10 - 12 reps', weight: 'Cable', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Seated+Cable+Row' },
-                        { name: 'Superset: Bicep Curl + Tricep Pushdown', group: 'Tay', sets: 3, reps: '12 - 15 reps', weight: 'Dumbbell', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Arms' }
+                        { name: 'Dumbbell Bench Press (Đẩy ngực tạ đơn)', group: 'Ngực', sets: 3, reps: '8 - 10 reps', equip: 'Dumbbell', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Dumbbell+Bench+Press' },
+                        { name: 'Lat Pulldown / Pull-up (Kéo xô)', group: 'Lưng / Xô', sets: 3, reps: '8 - 10 reps', equip: 'Machine', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Lat+Pulldown+Pull-up' },
+                        { name: 'Seated Cable Row (Kéo xô ngồi)', group: 'Lưng / Xô', sets: 3, reps: '10 - 12 reps', equip: 'Cable', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Seated+Cable+Row' },
+                        { name: 'Overhead Dumbbell Press (Đẩy vai)', group: 'Vai', sets: 3, reps: '10 - 12 reps', equip: 'Dumbbell', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Overhead+Dumbbell+Press' },
+                        { name: 'Face Pull (Kéo cáp vai sau)', group: 'Vai', sets: 3, reps: '15 reps', equip: 'Cable', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Face+Pull' },
+                        { name: 'Superset: Bicep Curl + Tricep Pushdown', group: 'Tay', sets: 3, reps: '12 - 15 reps', equip: 'Dumbbell', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Superset+Bicep+Curl+++Tricep+Pushdown' },
+                        { name: 'Hanging Knee Raise (Gập bụng đu xà gập gối)', group: 'Bụng', sets: 3, reps: '12 - 15 reps', equip: 'Bodyweight', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Hanging+Knee+Raise' }
                     ]
                 },
                 {
                     id: 'd2', dayName: 'Thứ 3', title: 'Cardio 1: Zone 2 Endurance', focus: 'Đốt mỡ hiếu khí & Sức bền',
-                    notes: 'Coach Phan Văn Nhựt lưu ý: Chạy bộ nhẹ nhàng hoặc đạp xe. Giữ nhịp tim ở mức 60-70% HRmax.',
+                    notes: 'Coach Phan Văn Nhựt lưu ý: Chạy bộ nhẹ nhàng hoặc đạp xe, giữ nhịp tim ở mức 60-70% HRmax. Khi tập vẫn nói chuyện được là đúng cường độ. Buổi này cường độ vừa nên không ảnh hưởng buổi tập chân hôm sau.',
                     memo: '',
                     exercises: [
-                        { name: 'Chạy bộ / Đạp xe nhịp tim Zone 2', group: 'Cardio', sets: 1, reps: '45 - 60 phút', weight: 'Heart Rate Z2', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Cardio' }
+                        { name: 'Chạy bộ / Đạp xe nhịp tim Zone 2', group: 'Cardio', sets: 1, reps: '45 - 60 phút', equip: 'Heart Rate Z2', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Chạy+bộ+Đạp+xe+nhịp+tim+Zone+2' }
                     ]
                 },
                 {
                     id: 'd3', dayName: 'Thứ 4', title: 'Gym 2: Lower Body & Core (Thân Dưới & Bụng)', focus: 'Chân, mông & Siết cơ bụng',
-                    notes: 'Coach Phan Văn Nhựt lưu ý: Tập trung tư thế Squat và RDL để giữ cơ đùi và mông săn chắc.',
+                    notes: 'Coach Phan Văn Nhựt lưu ý: Khởi động 5-8 phút và làm 1-2 set nhẹ bài đầu tiên. Tập trung tư thế Squat và RDL để giữ cơ đùi và mông săn chắc. Hôm sau là buổi cardio nhẹ để chân phục hồi.',
                     memo: '',
                     exercises: [
-                        { name: 'Barbell Squat / Goblet Squat', group: 'Đùi / Mông', sets: 4, reps: '8 - 10 reps', weight: 'Barbell', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Goblet+Squat' },
-                        { name: 'Romanian Deadlift (Deadlift đùi sau)', group: 'Đùi / Mông', sets: 3, reps: '10 - 12 reps', weight: 'Barbell', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Romanian+Deadlift' },
-                        { name: 'Walking Lunges (Bước gập gối)', group: 'Đùi / Mông', sets: 3, reps: '12 bước/chân', weight: 'Dumbbell', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Walking+Lunges' },
-                        { name: 'Standing Calf Raise', group: 'Đùi / Mông', sets: 3, reps: '15 - 20 reps', weight: 'Machine', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Standing+Calf+Raise' },
-                        { name: 'Plank Combo (Plank chuẩn + Side Plank)', group: 'Bụng', sets: 3, reps: '45 - 60 giây', weight: 'Bodyweight', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Plank' }
+                        { name: 'Barbell Squat / Goblet Squat', group: 'Đùi / Mông', sets: 4, reps: '8 - 10 reps', equip: 'Barbell', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Barbell+Squat+Goblet+Squat' },
+                        { name: 'Romanian Deadlift (Deadlift đùi sau)', group: 'Đùi / Mông', sets: 3, reps: '10 - 12 reps', equip: 'Barbell', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Romanian+Deadlift' },
+                        { name: 'Walking Lunges (Bước gập gối)', group: 'Đùi / Mông', sets: 3, reps: '12 bước/chân', equip: 'Dumbbell', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Walking+Lunges' },
+                        { name: 'Barbell Hip Thrust (Đẩy mông)', group: 'Đùi / Mông', sets: 3, reps: '10 - 12 reps', equip: 'Barbell', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Barbell+Hip+Thrust' },
+                        { name: 'Standing Calf Raise', group: 'Đùi / Mông', sets: 3, reps: '15 - 20 reps', equip: 'Machine', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Standing+Calf+Raise' },
+                        { name: 'Plank Combo (Plank chuẩn + Side Plank)', group: 'Bụng', sets: 3, reps: '45 - 60 giây', equip: 'Bodyweight', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Plank+Combo' }
                     ]
                 },
                 {
-                    id: 'd4', dayName: 'Thứ 5', title: 'Cardio 2: HIIT (Tập Ngắt Quãng Cường Độ Cao)', focus: 'Đốt calo cực đại & Tăng EPOC',
-                    notes: 'Coach Phan Văn Nhựt lưu ý: Sprint 30 giây hết sức -> Đi bộ hồi phục 60 giây. Lặp lại 10-12 chu kỳ.',
+                    id: 'd4', dayName: 'Thứ 5', title: 'Cardio 3: LISS / Active Recovery', focus: 'Phục hồi chủ động & Đốt calo nhẹ',
+                    notes: 'Coach Phan Văn Nhựt lưu ý: Đi bộ dốc (Incline 8-12, tốc độ 4.5 - 5.5 km/h) hoặc bơi lội nhẹ nhàng. Buổi này giúp chân bớt đau sau buổi Lower Body, không cần cố gắng hết sức.',
                     memo: '',
                     exercises: [
-                        { name: 'Khởi động đi bộ nhanh', group: 'Cardio', sets: 1, reps: '5 phút', weight: 'N/A', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Warmup' },
-                        { name: 'HIIT Treadmill Sprint (30s Sprint / 60s Walk)', group: 'Cardio', sets: 10, reps: '12 chu kỳ', weight: 'High Speed', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+HIIT' },
-                        { name: 'Cool down đi bộ thả lỏng', group: 'Cardio', sets: 1, reps: '5 phút', weight: 'N/A', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Cooldown' }
+                        { name: 'Incline Treadmill Walk (Đi bộ dốc) / Bơi lội', group: 'Cardio', sets: 1, reps: '45 phút', equip: 'Incline 8-12', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Incline+Treadmill+Walk' }
                     ]
                 },
                 {
                     id: 'd5', dayName: 'Thứ 6', title: 'Gym 3: Full Body (Toàn Thân)', focus: 'Kích hoạt lại toàn bộ cơ bắp',
-                    notes: 'Coach Phan Văn Nhựt lưu ý: Toàn thân tổng hợp giúp duy trì khối lượng cơ bắp trong quá trình thâm hụt calo.',
+                    notes: 'Coach Phan Văn Nhựt lưu ý: Khởi động 5-8 phút và làm 1-2 set nhẹ bài đầu tiên. Toàn thân tổng hợp giúp duy trì khối lượng cơ trong quá trình thâm hụt calo. Cách buổi Lower Body 48 giờ nên đủ sức nâng Deadlift.',
                     memo: '',
                     exercises: [
-                        { name: 'Barbell Deadlift (Cơ bản)', group: 'Lưng / Xô', sets: 3, reps: '6 - 8 reps', weight: 'Barbell', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Barbell+Deadlift' },
-                        { name: 'Incline Dumbbell Press (Ngực trên)', group: 'Ngực', sets: 3, reps: '10 - 12 reps', weight: 'Dumbbell', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Incline+Dumbbell+Press' },
-                        { name: 'Dumbbell Bulgarian Split Squat', group: 'Đùi / Mông', sets: 3, reps: '10 reps/chân', weight: 'Dumbbell', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Bulgarian+Split+Squat' },
-                        { name: 'Lat Pulldown / Cable Row', group: 'Lưng / Xô', sets: 3, reps: '10 - 12 reps', weight: 'Cable', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Lat+Pulldown' },
-                        { name: 'Dumbbell Lateral Raise (Vai)', group: 'Vai', sets: 3, reps: '15 reps', weight: 'Dumbbell', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Dumbbell+Lateral+Raise' }
+                        { name: 'Barbell Deadlift (Cơ bản)', group: 'Lưng / Xô', sets: 3, reps: '6 - 8 reps', equip: 'Barbell', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Barbell+Deadlift' },
+                        { name: 'Lat Pulldown / Cable Row', group: 'Lưng / Xô', sets: 3, reps: '10 - 12 reps', equip: 'Cable', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Lat+Pulldown+Cable+Row' },
+                        { name: 'Incline Dumbbell Press (Ngực trên)', group: 'Ngực', sets: 3, reps: '10 - 12 reps', equip: 'Dumbbell', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Incline+Dumbbell+Press' },
+                        { name: 'Dumbbell Bulgarian Split Squat', group: 'Đùi / Mông', sets: 3, reps: '10 reps/chân', equip: 'Dumbbell', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Dumbbell+Bulgarian+Split+Squat' },
+                        { name: 'Dumbbell Lateral Raise (Vai)', group: 'Vai', sets: 3, reps: '15 reps', equip: 'Dumbbell', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Dumbbell+Lateral+Raise' },
+                        { name: 'Cable Crunch (Gập bụng cáp)', group: 'Bụng', sets: 3, reps: '12 - 15 reps', equip: 'Cable', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Cable+Crunch' },
+                        { name: 'Superset: Hammer Curl + Overhead Triceps Extension', group: 'Tay', sets: 3, reps: '12 - 15 reps', equip: 'Dumbbell', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Hammer+Curl+Triceps+Extension' }
                     ]
                 },
                 {
-                    id: 'd6', dayName: 'Thứ 7', title: 'Cardio 3: LISS / Active Recovery', focus: 'Phục hồi chủ động & Đốt calo nhẹ',
-                    notes: 'Coach Phan Văn Nhựt lưu ý: Đi bộ dốc (Incline 8-12, tốc độ 4.5 - 5.5 km/h) hoặc bơi lội nhẹ nhàng.',
+                    id: 'd6', dayName: 'Thứ 7', title: 'Cardio 2: HIIT (Tập Ngắt Quãng Cường Độ Cao)', focus: 'Đốt calo cực đại & Tăng EPOC',
+                    notes: 'Coach Phan Văn Nhựt lưu ý: Sprint 30 giây hết sức, đi bộ hồi phục 60 giây. Làm 8 chu kỳ trong 2 tuần đầu rồi tăng dần lên 10-12 chu kỳ. Nếu chân còn đau sau buổi Full Body, chuyển sang xe đạp (Air Bike) hoặc máy chèo thuyền để đỡ chấn động.',
                     memo: '',
                     exercises: [
-                        { name: 'Incline Treadmill Walk (Đi bộ dốc) / Bơi lội', group: 'Cardio', sets: 1, reps: '45 phút', weight: 'Incline 8-12', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Incline+Walk' }
+                        { name: 'Khởi động đi bộ nhanh', group: 'Cardio', sets: 1, reps: '5 phút', equip: 'N/A', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Khởi+động+đi+bộ+nhanh' },
+                        { name: 'HIIT Treadmill Sprint (30s Sprint / 60s Walk)', group: 'Cardio', sets: 1, reps: '8 - 12 chu kỳ', equip: 'High Speed', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+HIIT+Treadmill+Sprint' },
+                        { name: 'Cool down đi bộ thả lỏng', group: 'Cardio', sets: 1, reps: '5 phút', equip: 'N/A', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Cool+down+đi+bộ+thả+lỏng' }
                     ]
                 },
                 {
                     id: 'd7', dayName: 'Chủ Nhật', title: 'Nghỉ Ngơi Hoàn Toàn (Rest Day)', focus: 'Thả lỏng toàn bộ cơ thể',
-                    notes: 'Coach Phan Văn Nhựt lưu ý: Nghỉ ngơi hoàn toàn để cơ bắp nạp lại glycogen.',
+                    notes: 'Coach Phan Văn Nhựt lưu ý: Nghỉ ngơi hoàn toàn để cơ bắp nạp lại glycogen. Ngủ đủ giấc và giữ lượng đạm hằng ngày.',
                     memo: '',
                     exercises: [
-                        { name: 'Nghỉ ngơi / Stretch nhẹ nhàng', group: 'Cardio', sets: 1, reps: '15 phút', weight: 'N/A', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Stretching' }
+                        { name: 'Nghỉ ngơi / Stretch nhẹ nhàng', group: 'Cardio', sets: 1, reps: '15 phút', equip: 'N/A', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Nghỉ+ngơi+Stretch+nhẹ+nhàng' }
                     ]
                 }
             ]
@@ -1005,6 +1075,25 @@
         const STORAGE_KEY = 'coachPVN_gymApp_data_v1';
 
         // Tinh chỉnh lịch tập theo giới tính: Nữ -> tăng Mông & Lưng/Xô, giảm Ngực/Vai, thêm bài bổ trợ
+        function insertAfterGroup(day, group, ex) {
+            let last = -1;
+            day.exercises.forEach((e, i) => { if (e.group === group) last = i; });
+            if (last === -1) day.exercises.push(ex); else day.exercises.splice(last + 1, 0, ex);
+        }
+
+        // Gom các bài cùng nhóm cơ đứng liền nhau (giữ thứ tự nhóm xuất hiện đầu tiên và thứ tự bài trong nhóm)
+        function groupDayByMuscle() {
+            const day = activeData.days[currentDayIndex];
+            const order = [];
+            day.exercises.forEach(e => { if (!order.includes(e.group)) order.push(e.group); });
+            const sorted = day.exercises.map((e, i) => ({ e, i })).sort((a, b) => (order.indexOf(a.e.group) - order.indexOf(b.e.group)) || (a.i - b.i)).map(x => x.e);
+            const changed = sorted.some((e, i) => e !== day.exercises[i]);
+            day.exercises = sorted;
+            renderOptionDetails();
+            saveAppData();
+            showToast(changed ? '✅ Đã gom các bài cùng nhóm cơ đứng liền nhau!' : 'Các bài trong ngày này đã được xếp theo nhóm cơ rồi.');
+        }
+
         function genderAdjustedProgram(base, gender) {
             const data = JSON.parse(JSON.stringify(base));
             if (gender !== 'female') return data;
@@ -1026,10 +1115,10 @@
                 const hasBack = day.exercises.some(e => e.group === 'Lưng / Xô');
 
                 if (hasLegs && !day.exercises.some(e => e.name.includes('Kickback'))) {
-                    day.exercises.push({ name: 'Cable Glute Kickback (Đá mông cáp)', group: 'Đùi / Mông', sets: 3, reps: '15 reps/chân', weight: 'Cable', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Cable+Glute+Kickback' });
+                    insertAfterGroup(day, 'Đùi / Mông', { name: 'Cable Glute Kickback (Đá mông cáp)', group: 'Đùi / Mông', sets: 3, reps: '15 reps/chân', equip: 'Cable', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Cable+Glute+Kickback' });
                 }
                 if (hasBack && !day.exercises.some(e => e.name.includes('Straight-Arm') || e.name.includes('Pullover'))) {
-                    day.exercises.push({ name: 'Straight-Arm Pulldown (Kéo xô tay thẳng)', group: 'Lưng / Xô', sets: 3, reps: '12 - 15 reps', weight: 'Cable', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Straight+Arm+Pulldown' });
+                    insertAfterGroup(day, 'Lưng / Xô', { name: 'Straight-Arm Pulldown (Kéo xô tay thẳng)', group: 'Lưng / Xô', sets: 3, reps: '12 - 15 reps', equip: 'Cable', weight: '', youtube: 'https://www.youtube.com/results?search_query=DeltaBolic+Straight+Arm+Pulldown' });
                 }
             });
 
@@ -1092,6 +1181,7 @@
                     const parsed = JSON.parse(raw);
                     if (parsed && parsed.students && Object.keys(parsed.students).length > 0) {
                         Object.values(parsed.students).forEach(normalizeStudent);
+                        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed)); } catch (e) {}
                         return parsed;
                     }
                 }
@@ -1126,6 +1216,31 @@
             st.age = parseFloat(st.age) || null;
             st.liftLogs = Array.isArray(st.liftLogs) ? st.liftLogs : [];
             st.measurements = Array.isArray(st.measurements) ? st.measurements : [];
+            // Chạy 1 lần cho mỗi hồ sơ: gom các bài cùng nhóm cơ đứng liền nhau (chỉ đổi vị trí, không xóa/sửa nội dung)
+            if (!st.groupedByMuscleV1) {
+                Object.values(st.programs).forEach(prog => (prog.days || []).forEach(day => {
+                    const exs = day.exercises || [], order = [];
+                    exs.forEach(e => { if (!order.includes(e.group)) order.push(e.group); });
+                    day.exercises = exs.map((e, i) => ({ e, i })).sort((a, b) => (order.indexOf(a.e.group) - order.indexOf(b.e.group)) || (a.i - b.i)).map(x => x.e);
+                }));
+                st.groupedByMuscleV1 = true;
+            }
+            if (!st.cycleWeek || st.cycleWeek < 1) st.cycleWeek = 1;
+            // Chạy 1 lần: tách "Dụng cụ" khỏi "Mức tạ (kg)" và chỉnh dữ liệu HIIT cũ
+            if (!st.equipSplitV1) {
+                Object.values(st.programs).forEach(prog => (prog.days || []).forEach(day => (day.exercises || []).forEach(ex => {
+                    if (ex.equip === undefined) {
+                        const w = String(ex.weight || '').trim();
+                        const isKg = /^\d+([.,]\d+)?\s*(kg|kgs)?(\s*x.*)?$/i.test(w) || /kg/i.test(w);
+                        if (isKg) { ex.equip = ''; ex.weight = w; }
+                        else { ex.equip = (w === 'Tùy chỉnh' ? '' : w); ex.weight = ''; }
+                    }
+                    if (ex.name && ex.name.indexOf('HIIT Treadmill Sprint') === 0 && ex.sets === 10 && ex.reps === '12 chu kỳ') {
+                        ex.sets = 1; ex.reps = '8 - 12 chu kỳ';
+                    }
+                })));
+                st.equipSplitV1 = true;
+            }
             return st;
         }
 
@@ -1869,7 +1984,10 @@
                 ['Chest Fly', 'Ép ngực'],
                 ['Dumbbell Fly', 'Ép ngực bằng tạ đơn'],
                 ['Pec Deck Fly', 'Ép ngực bằng máy (Pec Deck)'],
-                ['Dumbbell Pullover', 'Gập ngực/kéo tạ đơn qua đầu']
+                ['Dumbbell Pullover', 'Gập ngực/kéo tạ đơn qua đầu'],
+                ['Cable Fly', 'Ép ngực cáp, chỉnh cáp cao/thấp để nhấn ngực dưới/trên'],
+                ['Incline Dumbbell Press', 'Đẩy ngực trên bằng tạ đơn ghế dốc'],
+                ['Chest Dip', 'Xà kép nghiêng người về trước để nhấn ngực']
             ],
             'Lưng / Xô': [
                 ['Lat Pulldown', 'Kéo cáp xuống tập xô/lưng'],
@@ -1880,7 +1998,11 @@
                 ['Pull-up', 'Hít xà đơn'],
                 ['Face Pull', 'Kéo cáp chạm mặt (vai sau và lưng trên)'],
                 ['Straight-Arm Pulldown', 'Kéo thẳng tay ép xô'],
-                ['Deadlift', 'Deadlift (kéo tạ từ mặt đất - toàn thân/lưng dưới)']
+                ['Deadlift', 'Deadlift (kéo tạ từ mặt đất - toàn thân/lưng dưới)'],
+                ['Barbell Shrug', 'Nhún cầu vai với thanh đòn (cơ thang)'],
+                ['Single-arm Dumbbell Row', 'Chèo tạ đơn một tay'],
+                ['Chin-up', 'Hít xà ngửa tay (nhấn xô và tay trước)'],
+                ['Rack Pull', 'Kéo tạ từ giá (nhấn lưng trên và cầu vai)']
             ],
             'Vai': [
                 ['Overhead Press', 'Đẩy vai qua đầu'],
@@ -1890,7 +2012,11 @@
                 ['Front Raise', 'Đẩy/nâng tạ phía trước (vai trước)'],
                 ['Rear Delt Fly', 'Dang tạ tập vai sau'],
                 ['Upright Row', 'Kéo tạ thẳng đứng lên sát cằm'],
-                ['Shrugs', 'Nhún vai (cơ thang)']
+                ['Shrugs', 'Nhún vai (cơ thang)'],
+                ['Cable Lateral Raise', 'Banh vai cáp (vai giữa, giữ lực căng liên tục)'],
+                ['Dumbbell Lateral Raise', 'Banh vai tạ đơn'],
+                ['Reverse Pec Deck', 'Banh vai sau trên máy Pec Deck'],
+                ['Face Pull', 'Kéo cáp ngang mặt (vai sau)']
             ],
             'Tay': [
                 ['Bicep Curl', 'Cuốn tạ tay trước'],
@@ -1901,7 +2027,12 @@
                 ['Triceps Pushdown', 'Cáp ép duỗi tay sau'],
                 ['Skull Crusher', 'Nằm đẩy thanh đòn gập tay (Skull Crusher)'],
                 ['Tricep Extension', 'Duỗi tay sau'],
-                ['Overhead Tricep Extension', 'Duỗi tay sau qua đầu']
+                ['Overhead Tricep Extension', 'Duỗi tay sau qua đầu'],
+                ['Incline Dumbbell Curl', 'Cuốn tay trước tạ đơn trên ghế dốc (kéo giãn đầu dài)'],
+                ['Wrist Curl', 'Cuốn cổ tay (cẳng tay, lòng bàn tay hướng lên)'],
+                ['Reverse Curl', 'Cuốn ngược tay (cẳng tay và cơ cánh tay trước)'],
+                ['Overhead Cable Triceps Extension', 'Duỗi tay sau qua đầu bằng cáp (đầu dài)'],
+                ['Triceps Rope Pushdown', 'Ép cáp dây thừng tay sau']
             ],
             'Đùi / Mông': [
                 ['Squat', 'Gánh tạ đứng lên ngồi xuống (đùi trước)'],
@@ -1915,7 +2046,15 @@
                 ['Leg Curl', 'Nằm/ngồi cuộn đùi sau'],
                 ['Romanian Deadlift', 'Deadlift chân thẳng (tập đùi sau và mông)'],
                 ['Hip Thrust', 'Đẩy hông với tạ (tập mông)'],
-                ['Calf Raise', 'Nhón bắp chân']
+                ['Calf Raise', 'Nhón bắp chân'],
+                ['Hip Abduction Machine', 'Đạp mông ngoài trên máy (mông nhỡ)'],
+                ['Seated Calf Raise', 'Nhón bắp chân ngồi (cơ dép)'],
+                ['Standing Calf Raise', 'Nhón bắp chân đứng (cơ bụng chân)'],
+                ['Cable Glute Kickback', 'Đá mông cáp'],
+                ['Walking Lunges', 'Bước gập gối đi tới'],
+                ['Seated Leg Curl', 'Cuộn đùi sau ngồi'],
+                ['Lying Leg Curl', 'Cuộn đùi sau nằm'],
+                ['Glute Bridge', 'Nâng hông nằm (mông, ít tạ hơn Hip Thrust)']
             ],
             'Bụng': [
                 ['Cable Crunch', 'Gập bụng với cáp (bài tập siết cơ bụng trên rất hiệu quả)'],
@@ -1923,7 +2062,13 @@
                 ['Sit-Up', 'Nằm ngồi lên gập bụng'],
                 ['Lying Leg Raise', 'Nâng chân thẳng nằm sàn (chuyên tập bụng dưới)'],
                 ['Plank', 'Plank giữ thăng bằng (tăng sức mạnh cơ lõi/core)'],
-                ['Hanging Decline Rowing Crunches', 'Gập bụng treo người / ghế dốc kết hợp kéo cơ core']
+                ['Hanging Decline Rowing Crunches', 'Gập bụng treo người / ghế dốc kết hợp kéo cơ core'],
+                ['Ab Wheel Rollout', 'Lăn bánh xe bụng'],
+                ['Hanging Leg Raise', 'Treo xà nâng chân thẳng'],
+                ['Hanging Knee Raise', 'Treo xà gập gối (dễ hơn nâng chân thẳng)'],
+                ['Side Plank', 'Plank nghiêng (cơ liên sườn)'],
+                ['Russian Twist', 'Xoay người ngồi (cơ chéo bụng)'],
+                ['Dead Bug', 'Bài core nằm, tay chân đối bên']
             ],
             'Cardio': [
                 ['Treadmill Run / Walk', 'Chạy/đi bộ máy — điều chỉnh tốc độ & độ dốc theo Zone tim'],
@@ -1935,7 +2080,9 @@
                 ['Jump Rope', 'Nhảy dây'],
                 ['HIIT Sprint Intervals', 'Chạy nước rút ngắt quãng (VD: 30s sprint / 60s đi bộ)'],
                 ['Zone 2 Steady Cardio', 'Cardio ổn định vùng nhịp tim Zone 2 (đốt mỡ hiếu khí)'],
-                ['Swimming (Bơi lội)', 'Bơi lội — toàn thân, ít áp lực khớp']
+                ['Swimming (Bơi lội)', 'Bơi lội — toàn thân, ít áp lực khớp'],
+                ['Air Bike (Xe đạp quạt)', 'Đạp xe quạt, ít chấn động, hợp HIIT khi chân còn đau'],
+                ['HIIT Treadmill Sprint', 'Nước rút 30 giây, đi bộ 60 giây trên máy chạy']
             ]
         };
 
@@ -2166,7 +2313,7 @@
             tbody.innerHTML = '';
 
             if (day.exercises.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-400 text-xs">Chưa có bài tập nào cho ngày này. Hãy bấm <b>"Thêm bài tập"</b> để tạo danh sách mới.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400 text-xs">Chưa có bài tập nào cho ngày này. Hãy bấm <b>"Thêm bài tập"</b> để tạo danh sách mới.</td></tr>`;
                 return;
             }
 
@@ -2176,17 +2323,20 @@
                 tr.className = "hover:bg-slate-50/80 transition-colors";
                 tr.innerHTML = `
                     <td class="py-3 px-4 font-medium text-slate-800">
-                        <div>${ex.name}</div>
+                        <div>${esc(ex.name)}</div>
                         <span class="text-[10px] inline-block px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded mt-0.5 font-semibold">${ex.group}</span>
                     </td>
                     <td class="py-3 px-3 text-center">
                         <input type="number" min="1" max="10" value="${ex.sets}" onchange="updateExerciseInline(${idx}, 'sets', this.value)" class="w-12 text-center text-xs py-1 border border-slate-200 rounded font-semibold bg-white focus:ring-1 focus:ring-emerald-500 outline-none">
                     </td>
                     <td class="py-3 px-3 text-center">
-                        <input type="text" value="${ex.reps}" onchange="updateExerciseInline(${idx}, 'reps', this.value)" class="w-24 text-center text-xs py-1 border border-slate-200 rounded font-medium bg-white focus:ring-1 focus:ring-emerald-500 outline-none">
+                        <input type="text" value="${esc(ex.reps)}" onchange="updateExerciseInline(${idx}, 'reps', this.value)" class="w-24 text-center text-xs py-1 border border-slate-200 rounded font-medium bg-white focus:ring-1 focus:ring-emerald-500 outline-none">
                     </td>
                     <td class="py-3 px-3 text-center">
-                        <input type="text" value="${ex.weight}" onchange="updateExerciseInline(${idx}, 'weight', this.value)" class="w-20 text-center text-xs py-1 border border-slate-200 rounded font-medium bg-white focus:ring-1 focus:ring-emerald-500 outline-none">
+                        <input type="text" value="${esc(ex.equip || '')}" onchange="updateExerciseInline(${idx}, 'equip', this.value)" placeholder="Dụng cụ" class="w-24 text-center text-xs py-1 border border-slate-200 rounded font-medium bg-white focus:ring-1 focus:ring-emerald-500 outline-none">
+                    </td>
+                    <td class="py-3 px-3 text-center">
+                        <input type="text" value="${esc(ex.weight || '')}" placeholder="kg" onchange="updateExerciseInline(${idx}, 'weight', this.value)" class="w-20 text-center text-xs py-1 border border-slate-200 rounded font-medium bg-white focus:ring-1 focus:ring-emerald-500 outline-none">
                     </td>
                     <td class="py-3 px-3 text-center">
                         <a href="${ytUrl}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-[11px] font-bold rounded-lg transition-all shadow-sm" title="Xem video hướng dẫn form kỹ thuật chuẩn từ DeltaBolic (Andrew Kwong)">
@@ -2294,7 +2444,8 @@
             document.getElementById('modal-ex-name').value = "";
             document.getElementById('modal-ex-sets').value = "3";
             document.getElementById('modal-ex-reps').value = "10 - 12 reps";
-            document.getElementById('modal-ex-weight').value = "Dumbbell";
+            document.getElementById('modal-ex-weight').value = "";
+            document.getElementById('modal-ex-equip').value = "Dumbbell";
             document.getElementById('modal-ex-youtube').value = "";
             
             document.getElementById('modal-btn-delete').classList.add('hidden');
@@ -2310,7 +2461,8 @@
             document.getElementById('modal-ex-group').value = ex.group;
             document.getElementById('modal-ex-sets').value = ex.sets;
             document.getElementById('modal-ex-reps').value = ex.reps;
-            document.getElementById('modal-ex-weight').value = ex.weight;
+            document.getElementById('modal-ex-weight').value = ex.weight || '';
+            document.getElementById('modal-ex-equip').value = ex.equip || '';
             document.getElementById('modal-ex-youtube').value = ex.youtube || "";
             
             document.getElementById('modal-btn-delete').classList.remove('hidden');
@@ -2331,7 +2483,8 @@
                 group: document.getElementById('modal-ex-group').value,
                 sets: parseInt(document.getElementById('modal-ex-sets').value) || 3,
                 reps: document.getElementById('modal-ex-reps').value,
-                weight: document.getElementById('modal-ex-weight').value,
+                equip: document.getElementById('modal-ex-equip').value.trim(),
+                weight: document.getElementById('modal-ex-weight').value.trim(),
                 youtube: youtubeInput
             };
 
@@ -2483,6 +2636,7 @@
             text += `🎯 Mục Tiêu: ${goalNames[goal] || goal}\n`;
             text += `📅 Áp Dụng: ${startDate}\n`;
             text += `📌 Chương Trình: ${activeData.title}\n`;
+            { const cy = cyclePhaseInfo(s); text += `🔁 Chu Kỳ: Tuần ${cy.week} (${cy.phase.name}) · ${cy.phase.rir} · ${cy.phase.sets}\n`; }
             if (coachNote) text += `💬 Lời Nhắn Từ Coach: "${coachNote}"\n`;
             text += `=======================================\n\n`;
 
@@ -2493,7 +2647,7 @@
                     text += `   (Chưa xếp bài tập)\n`;
                 } else {
                     day.exercises.forEach((ex, i) => {
-                        text += `   ${i + 1}. ${ex.name} | ${ex.sets} sets x ${ex.reps} | Tạ: ${ex.weight}\n`;
+                        text += `   ${i + 1}. ${ex.name} | ${ex.sets} sets x ${ex.reps} | Dụng cụ/Tạ: ${[ex.equip, ex.weight].filter(Boolean).join(' · ') || '—'}\n`;
                         text += `      ▶ Video Form DeltaBolic (Andrew Kwong): ${getYouTubeUrl(ex)}\n`;
                     });
                 }
@@ -2613,6 +2767,193 @@
             }, 2500);
         }
 
+
+        // ===== Chu kỳ tăng tạ & giảm tải (item 5) =====
+        const CYCLE_PHASES = [
+            { name: 'Làm quen & Kỹ thuật', short: 'Làm quen', rir: 'Còn dư khoảng 3 reps (RIR 3)', sets: 'Đủ số set theo lịch',
+              load: 'Chọn mức tạ làm được ở cận dưới số reps với form chuẩn rồi ghi lại mức tạ.', deload: false },
+            { name: 'Tăng dần', short: 'Tăng dần', rir: 'Còn dư khoảng 2 reps (RIR 2)', sets: 'Đủ số set theo lịch',
+              load: 'Mỗi buổi cố thêm 1 rep. Đạt cận trên reps ở mọi set thì tăng tạ buổi sau.', deload: false },
+            { name: 'Đỉnh điểm', short: 'Đỉnh điểm', rir: 'Còn dư 1-2 reps (RIR 1-2)', sets: 'Đủ số set, bài chính có thể thêm 1 set nếu hồi phục tốt',
+              load: 'Cố vượt kỷ lục tuần trước (thêm 1 rep hoặc tăng tạ nhẹ). Vẫn giữ form chuẩn.', deload: false },
+            { name: 'Giảm tải (Deload)', short: 'Giảm tải', rir: 'Còn dư 4 reps trở lên (RIR 4+)', sets: 'Giảm còn khoảng 50% số set mỗi bài',
+              load: 'Giảm tạ khoảng 10% hoặc giữ nguyên, tuyệt đối không tập sát ngưỡng. Ngủ đủ, ăn đủ đạm để cơ phục hồi.',
+              extra: 'Phương án 2 (đốt mỡ): bỏ buổi HIIT, thay bằng Zone 2 hoặc đi bộ dốc; giảm thời lượng cardio 20-30%.', deload: true }
+        ];
+        const CYCLE_RULES = [
+            'Chọn mức tạ sao cho làm được đủ cận dưới số reps (ví dụ 8 trong khoảng 8 - 10) với form chuẩn.',
+            'Mỗi buổi cố thêm 1 rep. Khi đạt cận trên (ví dụ 10 reps) ở TẤT CẢ các set thì tăng tạ buổi sau rồi quay lại cận dưới.',
+            'Mức tăng gợi ý: bài chân / Deadlift +5kg, bài thân trên đa khớp +2.5kg, bài cô lập +1 - 2kg (hoặc nấc tạ nhỏ nhất).',
+            'Không đạt cận dưới reps trong 2 buổi liên tiếp thì giảm tạ 5 - 10% rồi tăng lại từ từ.',
+            'Đau khớp hoặc đau nhói (khác với mỏi cơ): dừng bài đó và báo Coach.',
+            'Sau mỗi 3 tuần tập chính là 1 tuần giảm tải. Đây là phần của kế hoạch, không phải tập kém đi.'
+        ];
+        function cyclePhaseInfo(s) {
+            const week = Math.max(1, parseInt(s && s.cycleWeek, 10) || 1);
+            return { week, idx: (week - 1) % 4, cycle: Math.floor((week - 1) / 4) + 1, phase: CYCLE_PHASES[(week - 1) % 4] };
+        }
+        function cycleStep(d) {
+            const s = getCurrentStudent();
+            if (!s) return;
+            s.cycleWeek = Math.min(104, Math.max(1, (parseInt(s.cycleWeek, 10) || 1) + d));
+            saveAppData();
+            renderCycleCard();
+        }
+        function renderCycleCard() {
+            if (!appData || !appData.students) return;
+            const s = getCurrentStudent();
+            if (!s) return;
+            const cy = cyclePhaseInfo(s), $ = id => document.getElementById(id);
+            $('cy-week').textContent = cy.week;
+            $('cy-cycle').textContent = cy.cycle;
+            $('cy-dots').innerHTML = CYCLE_PHASES.map((ph, i) => {
+                const on = i === cy.idx;
+                const cls = on ? (ph.deload ? 'bg-amber-500 text-slate-950' : 'bg-emerald-500 text-slate-950') : 'bg-slate-100 text-slate-500';
+                return `<div class="py-2 rounded-lg ${cls}">Tuần ${i + 1}<br><span class="font-medium">${esc(ph.short)}</span></div>`;
+            }).join('');
+            const ph = cy.phase;
+            const box = $('cy-detail');
+            box.className = 'rounded-xl border p-4 text-sm space-y-1.5 ' + (ph.deload ? 'bg-amber-50 border-amber-200 text-amber-900' : 'bg-emerald-50 border-emerald-200 text-emerald-900');
+            box.innerHTML = `<div class="font-bold">Tuần ${cy.idx + 1}/4: ${esc(ph.name)}</div>
+                <div>🎯 Cường độ: ${esc(ph.rir)}</div>
+                <div>📊 Số set: ${esc(ph.sets)}</div>
+                <div>🏋️ Mức tạ: ${esc(ph.load)}</div>` + (ph.extra ? `<div>🏃 ${esc(ph.extra)}</div>` : '');
+            $('cy-rules').innerHTML = CYCLE_RULES.map(r => `<li>${esc(r)}</li>`).join('');
+        }
+        (function () {
+            const _load = loadStudentIntoUI;
+            loadStudentIntoUI = function () { _load.apply(this, arguments); renderCycleCard(); };
+        })();
+
+        // ===== Trang xem lịch dành riêng cho học viên (item 7) =====
+        // Hàm này được nhúng nguyên văn vào file HTML của học viên, nên chỉ dùng biến cục bộ.
+        function studentPageRuntime(prefix) {
+            var store = {};
+            try { store = window.localStorage; } catch (e) {}
+            function get(k) { try { return store.getItem(prefix + k) === '1'; } catch (e) { return false; } }
+            function set(k, v) { try { if (v) store.setItem(prefix + k, '1'); else store.removeItem(prefix + k); } catch (e) {} }
+            var tabs = [].slice.call(document.querySelectorAll('[data-tab]'));
+            var panels = [].slice.call(document.querySelectorAll('[data-panel]'));
+            function show(i) {
+                tabs.forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === String(i)); });
+                panels.forEach(function (p) { p.hidden = p.getAttribute('data-panel') !== String(i); });
+            }
+            function progress(i) {
+                var boxes = [].slice.call(document.querySelectorAll('input[data-k^="' + i + '-"]'));
+                var done = boxes.filter(function (b) { return b.checked; }).length;
+                var el = document.querySelector('[data-prog="' + i + '"]');
+                if (el) el.textContent = boxes.length ? ('Đã xong ' + done + '/' + boxes.length + ' bài' + (done === boxes.length ? ' 🎉' : '')) : '';
+            }
+            tabs.forEach(function (b) { b.addEventListener('click', function () { show(b.getAttribute('data-tab')); }); });
+            [].slice.call(document.querySelectorAll('input[data-k]')).forEach(function (c) {
+                var k = c.getAttribute('data-k');
+                c.checked = get(k);
+                c.closest('li').classList.toggle('done', c.checked);
+                c.addEventListener('change', function () {
+                    set(k, c.checked);
+                    c.closest('li').classList.toggle('done', c.checked);
+                    progress(k.split('-')[0]);
+                });
+            });
+            [].slice.call(document.querySelectorAll('[data-reset]')).forEach(function (r) {
+                r.addEventListener('click', function () {
+                    var i = r.getAttribute('data-reset');
+                    [].slice.call(document.querySelectorAll('input[data-k^="' + i + '-"]')).forEach(function (c) { c.checked = false; set(c.getAttribute('data-k'), false); c.closest('li').classList.remove('done'); });
+                    progress(i);
+                });
+            });
+            tabs.forEach(function (b) { progress(b.getAttribute('data-tab')); });
+            var today = (new Date().getDay() + 6) % 7;
+            show(today < tabs.length ? today : 0);
+        }
+
+        const STUDENT_PAGE_CSS = `
+:root{--bg:#f8fafc;--card:#fff;--tx:#0f172a;--mu:#64748b;--bd:#e2e8f0;--ac:#059669;--ac2:#d1fae5;--wa:#fef3c7}
+@media (prefers-color-scheme:dark){:root{--bg:#0b1220;--card:#111a2e;--tx:#e2e8f0;--mu:#94a3b8;--bd:#223049;--ac:#34d399;--ac2:#064e3b;--wa:#451a03}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+.w{max-width:760px;margin:0 auto;padding:14px}
+header.h{background:#0f172a;color:#fff;border-radius:16px;padding:16px}
+header.h b{font-size:18px}header.h small{display:block;color:#94a3b8;margin-top:2px}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.btns a{background:#10b981;color:#052e16;text-decoration:none;font-weight:700;font-size:13px;padding:8px 12px;border-radius:10px}.btns a.g{background:rgba(255,255,255,.12);color:#fff}
+.c{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:14px;margin-top:12px}
+.c h2{font-size:16px;margin:0 0 8px}.mu{color:var(--mu);font-size:13px}
+.ph{background:var(--ac2);border-radius:12px;padding:12px;font-size:14px}.ph.dl{background:var(--wa)}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-top:12px}.tabs button{flex:0 0 auto;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;padding:8px 12px;font-weight:600;font-size:13px}.tabs button.on{background:#10b981;color:#052e16;border-color:#10b981}
+ul.ex{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:8px}
+ul.ex li{display:flex;gap:10px;align-items:center;border:1px solid var(--bd);border-radius:12px;padding:10px}ul.ex li.done{opacity:.55}
+ul.ex input{width:22px;height:22px;flex:0 0 auto;accent-color:#10b981}
+.et{font-weight:700}.em{font-size:13px;color:var(--mu);display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:2px}.em b{color:var(--tx)}
+.tag{background:var(--ac2);color:var(--ac);border-radius:999px;padding:0 8px;font-size:12px;font-weight:700}
+.v{margin-left:auto;flex:0 0 auto;font-size:13px;font-weight:700;color:var(--ac);text-decoration:none;border:1px solid var(--bd);border-radius:10px;padding:6px 10px}
+.rs{background:none;border:1px solid var(--bd);color:var(--mu);border-radius:8px;padding:5px 10px;font-size:12px}
+.note{background:var(--wa);border-radius:10px;padding:10px;font-size:14px;margin-top:10px}
+.meal{border-top:1px solid var(--bd);padding:8px 0}.meal:first-of-type{border-top:0}.meal b{display:block}
+footer{color:var(--mu);font-size:12px;margin:16px 0 24px;text-align:center}
+[hidden]{display:none!important}
+`;
+
+        function exportStudentPage() {
+            const s = getCurrentStudent();
+            if (!s) return;
+            try { calculateMealPlan(); } catch (e) {}
+            const name = document.getElementById('student-name').value.trim() || 'Học Viên';
+            const gender = document.getElementById('student-gender').value;
+            const goal = document.getElementById('student-goal').value;
+            const weight = parseFloat(document.getElementById('student-weight').value) || s.weight || 68;
+            const hVal = parseFloat(document.getElementById('student-height').value) || null;
+            const aVal = parseFloat(document.getElementById('student-age').value) || null;
+            const startDate = document.getElementById('student-start-date').value.trim();
+            const coachNote = document.getElementById('coach-special-note').value.trim();
+            const activity = document.getElementById('meal-activity').value;
+            const mealsPerDay = parseInt(document.getElementById('meal-count').value) || 4;
+            const goalNames = { gain: 'Tăng cơ bắp', lose: 'Giảm mỡ giữ cơ', recomp: 'Tăng cơ giảm mỡ đồng thời' };
+            const plan = computeMealPlan(weight, goal, activity, mealsPerDay, { gender, height: hVal, age: aVal });
+            const cy = cyclePhaseInfo(s), ph = cy.phase, C = COACH_CONFIG, e = esc;
+            const safeUrl = u => /^https?:\/\//i.test(u) ? u : 'https://www.youtube.com/results?search_query=' + encodeURIComponent(u);
+
+            const tabsHtml = activeData.days.map((d, i) => `<button type="button" data-tab="${i}">${e(d.dayName)}</button>`).join('');
+            const panelsHtml = activeData.days.map((d, i) => {
+                const exs = d.exercises.map((ex, j) => `<li><input type="checkbox" data-k="${i}-${j}" aria-label="Đã xong ${e(ex.name)}">
+                    <div><div class="et">${e(ex.name)}</div><div class="em"><span class="tag">${e(ex.group)}</span><b>${e(ex.sets)} set × ${e(ex.reps)}</b>${[ex.equip, ex.weight].filter(Boolean).length ? '<span>' + e([ex.equip, ex.weight].filter(Boolean).join(' · ')) + '</span>' : ''}</div></div>
+                    <a class="v" href="${e(safeUrl(getYouTubeUrl(ex)))}" target="_blank" rel="noopener">▶ Video</a></li>`).join('');
+                return `<section class="c" data-panel="${i}" hidden>
+                    <h2>${e(d.title)}</h2><div class="mu">Trọng tâm: ${e(d.focus || '')}</div>
+                    ${d.notes ? `<div class="note">💡 ${e(d.notes)}</div>` : ''}
+                    ${d.exercises.length ? `<ul class="ex">${exs}</ul>` : '<p class="mu">Hôm nay chưa có bài tập.</p>'}
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px"><span class="mu" data-prog="${i}"></span><button type="button" class="rs" data-reset="${i}">Làm lại buổi này</button></div>
+                </section>`;
+            }).join('');
+            const mealsHtml = plan.meals.map(m => `<div class="meal"><b>${e(m.name)} · ${e(m.cal)} kcal · ${e(m.protein)}g đạm</b>${m.items.map(it => `<div class="mu">• ${e(it.food)}: ${e(it.grams)}${e(it.unit)}</div>`).join('')}</div>`).join('');
+            const proteinTxt = document.getElementById('res-protein').innerText, waterTxt = document.getElementById('res-water').innerText;
+            const stamp = new Date().toLocaleDateString('vi-VN');
+            const prefix = 'pvn-' + String(s.id || 'hv').replace(/[^a-z0-9_-]/gi, '') + '-' + currentOptionKey + '-';
+
+            const html = '<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">' +
+                '<meta name="theme-color" content="#0f172a"><title>' + e('Lịch tập - ' + name + ' | ' + C.brandName) + '</title><style>' + STUDENT_PAGE_CSS + '</style></head><body><div class="w">' +
+                `<header class="h"><b>${e(C.brandName)}</b> · ${e(C.coachName)}<small>"${e(C.slogan)}"</small><small>📍 ${e(C.gymAddress)} · ${e(C.location)}</small>
+                    <div class="btns"><a href="tel:${e(C.phone)}">📞 Gọi Coach</a><a class="g" href="https://zalo.me/${e(C.zalo)}" target="_blank" rel="noopener">💬 Zalo</a><a class="g" href="${e(C.facebook)}" target="_blank" rel="noopener">Facebook</a><a class="g" href="${e(C.tiktok)}" target="_blank" rel="noopener">TikTok</a></div></header>` +
+                `<section class="c"><h2>🎓 ${e(name)} (${gender === 'female' ? 'Nữ' : 'Nam'})</h2>
+                    <div class="mu">${e(weight)} kg${hVal ? ' · ' + e(hVal) + ' cm' : ''}${aVal ? ' · ' + e(aVal) + ' tuổi' : ''} · Mục tiêu: ${e(goalNames[goal] || goal)}${startDate ? ' · ' + e(startDate) : ''}</div>
+                    <div class="mu">📌 ${e(activeData.title)}</div>
+                    ${coachNote ? `<div class="note">💬 Lời nhắn từ Coach: ${e(coachNote)}</div>` : ''}</section>` +
+                `<section class="c"><h2>🔁 Tuần ${e(cy.week)} · ${e(ph.name)}</h2><div class="ph${ph.deload ? ' dl' : ''}">🎯 ${e(ph.rir)}<br>📊 ${e(ph.sets)}<br>🏋️ ${e(ph.load)}${ph.extra ? '<br>🏃 ' + e(ph.extra) : ''}</div>
+                    <details style="margin-top:8px"><summary class="mu" style="cursor:pointer">Cách tăng tạ đúng</summary><ul class="mu">${CYCLE_RULES.map(r => '<li>' + e(r) + '</li>').join('')}</ul></details></section>` +
+                `<div class="tabs">${tabsHtml}</div>${panelsHtml}` +
+                `<section class="c"><h2>⏱ Nghỉ giữa set</h2><div class="mu">Bài cô lập nghỉ 60 - 90 giây, bài đa khớp nặng nghỉ 2 - 3 phút. Tích vào ô tròn ở mỗi bài để đánh dấu đã xong, trạng thái lưu trên điện thoại của bạn.</div></section>` +
+                `<section class="c"><h2>🥗 Dinh dưỡng mỗi ngày</h2><div class="mu">~${e(plan.target)} kcal · Protein ${e(proteinTxt)} · Nước ${e(waterTxt)} · Ngủ 7.5 - 8.5 tiếng</div>${mealsHtml}<div class="mu">Số gam mang tính ước tính tham khảo, có thể điều chỉnh theo phản hồi cơ thể.</div></section>` +
+                `<footer>⚠️ Giáo trình mang tính tham khảo. Nếu có chấn thương, bệnh nền hoặc đang mang thai, hãy hỏi bác sĩ trước khi tập hoặc thay đổi chế độ ăn. Ngưng tập và báo Coach ngay nếu đau bất thường.<br>${e(C.brandName)} · cập nhật ${e(stamp)}</footer></div>` +
+                '<scr' + 'ipt>(' + studentPageRuntime.toString() + ')(' + JSON.stringify(prefix) + ');</scr' + 'ipt></body></html>';
+
+            const slug = name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() || 'hoc-vien';
+            const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = 'lich-tap-' + slug + '.html';
+            document.body.appendChild(a); a.click(); a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1500);
+            showToast('🌐 Đã tạo trang xem lịch cho ' + name + '. Gửi file này cho học viên!');
+        }
+
         // ===== Khởi tạo thương hiệu, tra cứu thực phẩm, lời dặn mẫu =====
         function applyBranding() {
             const C = COACH_CONFIG, $ = id => document.getElementById(id);
@@ -2654,7 +2995,78 @@
             const sel = document.getElementById('coach-template-select');
             Object.keys(COACH_TEMPLATES).forEach(k => sel.insertAdjacentHTML('beforeend', `<option value="${k}">${COACH_TEMPLATES[k].label}</option>`));
         }
-        applyBranding(); initFoodLookup(); initCoachTemplates(); updateBackupStatus(true);
+
+        // ===== Đồng hồ nghỉ giữa set =====
+        const RT_KEY = 'coachPVN_restTimer_v1';
+        const rt = { base: 90, total: 90, remaining: 90, endAt: null, running: false, handle: null, audio: null };
+        function rtFmt(s) { return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); }
+        function rtRender() {
+            const $ = id => document.getElementById(id);
+            $('rt-display').textContent = rtFmt(rt.remaining);
+            $('rt-bar').style.width = (rt.total ? Math.max(0, rt.remaining / rt.total * 100) : 0) + '%';
+            $('rt-main-btn').textContent = rt.running ? '⏸ Tạm dừng' : (rt.remaining === 0 ? '▶ Nghỉ lại' : '▶ Bắt đầu');
+            $('rt-display').className = 'text-4xl font-extrabold text-center tabular-nums ' + (rt.remaining === 0 ? 'text-emerald-600' : (rt.running && rt.remaining <= 10 ? 'text-rose-600' : 'text-slate-900'));
+            $('rt-fab-text').textContent = rt.running ? rtFmt(rt.remaining) : (rt.remaining === 0 ? 'Hết giờ!' : 'Nghỉ');
+        }
+        function rtSaveSettings() {
+            try { localStorage.setItem(RT_KEY, JSON.stringify({ total: rt.base, sound: document.getElementById('rt-sound').checked })); } catch (e) {}
+        }
+        function rtBeep() {
+            if (!document.getElementById('rt-sound').checked) return;
+            try { if (navigator.vibrate) navigator.vibrate([250, 120, 250, 120, 400]); } catch (e) {}
+            try {
+                const ctx = rt.audio || (rt.audio = new (window.AudioContext || window.webkitAudioContext)());
+                if (ctx.state === 'suspended') ctx.resume();
+                [0, 0.3, 0.6].forEach(off => {
+                    const o = ctx.createOscillator(), g = ctx.createGain();
+                    o.type = 'sine'; o.frequency.value = 880;
+                    g.gain.setValueAtTime(0.0001, ctx.currentTime + off);
+                    g.gain.exponentialRampToValueAtTime(0.4, ctx.currentTime + off + 0.02);
+                    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + off + 0.22);
+                    o.connect(g); g.connect(ctx.destination);
+                    o.start(ctx.currentTime + off); o.stop(ctx.currentTime + off + 0.25);
+                });
+            } catch (e) {}
+        }
+        function rtTick() {
+            rt.remaining = Math.max(0, Math.ceil((rt.endAt - Date.now()) / 1000));
+            if (rt.remaining === 0) {
+                clearInterval(rt.handle); rt.handle = null; rt.running = false;
+                rtBeep();
+                showToast('⏱ Hết giờ nghỉ, vào set tiếp theo!');
+            }
+            rtRender();
+        }
+        function rtStart() {
+            if (rt.remaining === 0) { rt.total = rt.base; rt.remaining = rt.base; }
+            // Mở/khởi tạo âm thanh ngay trong thao tác bấm để trình duyệt cho phép phát tiếng
+            try { rt.audio = rt.audio || new (window.AudioContext || window.webkitAudioContext)(); if (rt.audio.state === 'suspended') rt.audio.resume(); } catch (e) {}
+            rt.endAt = Date.now() + rt.remaining * 1000;
+            rt.running = true;
+            clearInterval(rt.handle);
+            rt.handle = setInterval(rtTick, 250);
+            rtRender();
+        }
+        function rtPause() { clearInterval(rt.handle); rt.handle = null; rt.running = false; rtRender(); }
+        function rtStartPause() { rt.running ? rtPause() : rtStart(); }
+        function rtPreset(sec) { rt.base = sec; rt.total = sec; rt.remaining = sec; rtSaveSettings(); rtStart(); }
+        function rtAdd(sec) {
+            rt.remaining += sec; rt.total = Math.max(rt.total, rt.remaining);
+            if (rt.running) rt.endAt += sec * 1000;
+            rtRender();
+        }
+        function rtReset() { rtPause(); rt.total = rt.base; rt.remaining = rt.base; rtRender(); }
+        function rtTogglePanel() { document.getElementById('rt-panel').classList.toggle('hidden'); }
+        function initRestTimer() {
+            try {
+                const s = JSON.parse(localStorage.getItem(RT_KEY) || 'null');
+                if (s && s.total > 0) { rt.base = s.total; rt.total = s.total; rt.remaining = s.total; }
+                if (s && s.sound === false) document.getElementById('rt-sound').checked = false;
+            } catch (e) {}
+            rtRender();
+        }
+
+        applyBranding(); initFoodLookup(); initCoachTemplates(); initRestTimer(); renderCycleCard(); updateBackupStatus(true);
         if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
             navigator.serviceWorker.register('sw.js').catch(e => console.warn('Không đăng ký được chế độ offline:', e));
         }
