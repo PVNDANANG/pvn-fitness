@@ -1,5 +1,5 @@
 // Chế độ offline: lưu app + thư viện CDN sau lần mở đầu tiên có mạng.
-const CACHE = 'pvn-fitness-v1';
+const CACHE = 'pvn-fitness-v2';
 const CDN_HOSTS = ['cdn.tailwindcss.com', 'cdn.jsdelivr.net'];
 const SHELL = ['./', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
 
